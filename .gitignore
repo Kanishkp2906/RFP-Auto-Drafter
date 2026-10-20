@@ -1,0 +1,38 @@
+# Python-generated files
+backend/__pycache__/
+backend/*.py[oc]
+backend/build/
+backend/dist/
+backend/wheels/
+backend/*.egg-info
+
+# Virtual environments
+backend/.venv
+backend/.env
+backend/uploaded_docs
+backend/rfp_function.sql
+backend/*.pdf
+backend/.gitignore
+backend/*.txt
+backend/*.log
+
+# Dependencies
+frontend/node_modules/
+
+# Production build
+rfp_frontend/dist/
+
+# Environment variables and secrets
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/pnpm-debug.log*
+
+# Tool caches
+frontend/.vite/
+frontend/.cache/
+
