@@ -40,7 +40,6 @@ frontend/.cache/
 frontend/.taste-skill/
 frontend/guidelines/
 
-
 .agents
 .claude
-.taske-skill
+.taste-skill
