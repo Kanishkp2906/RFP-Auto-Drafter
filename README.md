@@ -1,4 +1,4 @@
-![alt text](https://github.com/[Kanishkp2906]/[RFP Auto Drafter]/blob/[main]/RFPAutoDrafter.png?raw=true)
+![](https://github.com/[Kanishkp2906]/[RFP-Auto-Drafter]/blob/[main]/RFPAutoDrafter.png?raw=true)
 RFP Auto Drafter is an AI-powered service for Request for Proposal (RFP) analysis. Users upload RFP documents and chat with an agent that answers questions while citing the exact document sections it draws on — turning static RFPs into queryable, source-grounded knowledge.
 
 ## Service
@@ -28,4 +28,4 @@ Stack: React · Vite · TypeScript · Radix UI · Supabase JS · Tailwind
 
 ## System Design
 
-![alt text](https://github.com/[Kanishkp2906]/[RFP Auto Drafter]/blob/[main]/rfp_final.svg?raw=true)
+![](https://github.com/[Kanishkp2906]/[RFP-Auto-Drafter]/blob/[main]/rfp_final.svg?raw=true)
