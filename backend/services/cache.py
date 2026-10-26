@@ -1,13 +1,13 @@
 import json
 import logging
-from dependencies import redis_client
+from dependencies import async_redis
 
 logger = logging.getLogger(__name__)
 
 
 async def get_cache(key: str):
     try:
-        value = await redis_client.get(key)
+        value = await async_redis.get(key)
 
         if value is None:
             return None
@@ -21,7 +21,7 @@ async def get_cache(key: str):
 
 async def set_cache(key: str, value, ttl: int = 300) -> None:
     try:
-        await redis_client.set(
+        await async_redis.set(
             key,
             json.dumps(value, default=str),
             ex=ttl,
@@ -32,7 +32,7 @@ async def set_cache(key: str, value, ttl: int = 300) -> None:
 
 async def delete_cache(key: str) -> None:
     try:
-        await redis_client.delete(key)
+        await async_redis.delete(key)
 
     except Exception:
         logger.exception("Redis cache invalidation failed.")

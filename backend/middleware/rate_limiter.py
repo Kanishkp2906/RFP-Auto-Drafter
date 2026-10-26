@@ -4,9 +4,9 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from middleware.public_paths import PUBLIC_PATHS
 from middleware.sliding_window import SLIDING_WINDOW_SCRIPT
-from dependencies import redis_client
+from dependencies import async_redis
 
-SLIDING_LIMITS = {"/api/documents/uploads": (5, 60), "/api/rag/chat": (10, 60)}
+SLIDING_LIMITS = {"/v1/documents/uploads": (5, 60), "/v1/rag/chat": (10, 60)}
 
 
 class RedisRateLimiter(BaseHTTPMiddleware):
@@ -14,7 +14,7 @@ class RedisRateLimiter(BaseHTTPMiddleware):
         super().__init__(app)
         self.limit = limit
         self.window = window
-        self.sliding_script = redis_client.register_script(SLIDING_WINDOW_SCRIPT)
+        self.sliding_script = async_redis.register_script(SLIDING_WINDOW_SCRIPT)
 
     async def dispatch(self, request: Request, call_next):
 
@@ -51,13 +51,13 @@ class RedisRateLimiter(BaseHTTPMiddleware):
 
         else:
             redis_key = f"ratelimiting: {user.id}"
-            count = await redis_client.incr(redis_key)
+            count = await async_redis.incr(redis_key)
 
             if count == 1:
-                await redis_client.expire(redis_key, self.window)
+                await async_redis.expire(redis_key, self.window)
 
             if count > self.limit:
-                ttl = await redis_client.ttl(redis_key)
+                ttl = await async_redis.ttl(redis_key)
 
                 return JSONResponse(
                     status_code=429,

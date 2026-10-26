@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional, List
-from typing_extensions import TypedDict
+from typing import Optional, List, TypedDict, Dict, Any
 from datetime import datetime
 from enum import Enum
 import uuid
@@ -22,7 +21,6 @@ class UserSignUp(BaseModel):
     email: EmailStr
     username: str
     password: str
-    # role: UserRole = UserRole.user
 
 
 class UserSignIn(BaseModel):
@@ -33,7 +31,6 @@ class UserSignIn(BaseModel):
 class UserUpdate(BaseModel):
     username: str
     email: EmailStr
-    # password: str
 
 
 class UserResponse(BaseModel):
@@ -65,7 +62,7 @@ class DocumentResponse(BaseModel):
 class RFPSource(BaseModel):
     sections: List[str]
     chunk_index: int
-    similarity: float  # To be removed later
+    similarity: float
     document_id: uuid.UUID
     filename: str
 
@@ -73,6 +70,7 @@ class RFPSource(BaseModel):
 class ChatRequest(BaseModel):
     session_id: uuid.UUID
     user_query: str
+    document_ids: List[uuid.UUID] = []
 
 
 class ChatResponse(BaseModel):
@@ -101,6 +99,7 @@ class Sessions(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     title: str | None
+    pinned: bool = False
     created_at: datetime
 
 
@@ -113,11 +112,11 @@ class AgentState(TypedDict):
     session_id: str
     user_query: str
     document_ids: List[uuid.UUID]
-    title: SessionTitle | None
     memories: List[str] | None
-    relevant_context: List[dict] | None
-    chat_history: List[dict] | None
+    relevant_context: List[Dict[str, Any]] | None
+    chat_history: List[Dict[str, Any]] | None
     llm_answer: ChatResponse | None
+    title: str | None
     message_saved: bool = False
     mem_decision: bool = False
     memory_updated: bool = False

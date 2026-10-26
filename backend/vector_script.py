@@ -1,12 +1,17 @@
 import uuid
 import re
+import json
+import logging
+import pymupdf4llm
+from dependencies import sync_redis
 from pathlib import Path
 from schemas import UploadStatus
-import pymupdf4llm
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from supabase import Client, create_client
-from config import supabase_url, supabase_key
+from config import supabase_url, supabase_key, embedding_model
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseError(Exception):
@@ -32,12 +37,11 @@ def document_vectorizer(
         )
 
         if not db_response.data:
-            print("[+] Error in updating the file status to processing.")
             raise DatabaseError("Error in updating the file status to processing.")
 
         pdf_sections = get_pdf_sections(document_path)
 
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+        embeddings = GoogleGenerativeAIEmbeddings(model=embedding_model)
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000, chunk_overlap=100
@@ -62,7 +66,7 @@ def document_vectorizer(
         texts = [chunk.page_content for chunk in chunks]
         vectors = embeddings.embed_documents(texts)
 
-        print("[+] Vectors generated. Uploading to supabase...")
+        logger.info("[+] Vectors generated. Uploading to supabase...")
 
         upload_data = []
         for i, chunk in enumerate(chunks):
@@ -88,16 +92,35 @@ def document_vectorizer(
             .execute()
         )
         document_path.unlink()
-        print("[SUCCESS]: Document chunks uploaded to the database.")
+
+        logger.info("[SUCCESS]: Document chunks uploaded to the database.")
+
+        user_documents = (
+            db.table("documents").select("*").eq("user_id", user_id).execute().data
+        )
+
+        sync_redis.delete(f"documents:{user_id}")
+        sync_redis.set(
+            f"documents:{user_id}", json.dumps(user_documents, default=str), ex=600
+        )
 
     except Exception as error:
-        print(f"[FAILURE]: Document vecotrization failed: {str(error)}")
+        logger.execption(f"[FAILURE]: Document vecotrization failed: {str(error)}")
         db_response = (
             db.table("documents")
             .update({"upload_status": UploadStatus.failed.value})
             .eq("id", document_id)
             .execute()
         )
+
+        user_documents = (
+            db.table("documents").select("*").eq("user_id", user_id).execute().data
+        )
+        sync_redis.delete(f"documents:{user_id}")
+        sync_redis.set(
+            f"documents:{user_id}", json.dumps(user_documents, default=str), ex=600
+        )
+
         raise
 
 
@@ -130,5 +153,5 @@ def get_pdf_sections(document_path: str) -> dict:
         return sections
 
     except Exception as e:
-        print(f"[+] Error occured in finding sections of pdf: {str(e)}")
+        logger.execption(f"[+] Error occured in finding sections of pdf: {str(e)}")
         raise PDFProcessingError("Error occured while converting the pdf to markdown.")

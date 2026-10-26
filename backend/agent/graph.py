@@ -13,9 +13,9 @@ from agent.nodes import (
 
 
 def title_check(state: AgentState) -> str:
-    if state["title"] == "New Chat":
+    if state["title"] is None:
         return "generate_title"
-    return "generate_answer"
+    return "save_messages"
 
 
 builder = StateGraph(AgentState)
@@ -30,9 +30,14 @@ builder.add_node("memory_decision", memory_decision_node)
 builder.add_node("update_memory", update_memory_node)
 
 builder.add_edge(START, "retrieve_memories")
-builder.add_edge("retrieve_memories", "retrieve_context")
-builder.add_conditional_edges("retrieve_context", title_check)
-builder.add_edge("generate_title", "generate_answer")
-builder.add_edge("generate_answer", "save_messages")
+builder.add_edge(START, "retrieve_chat_history")
+builder.add_edge(START, "retrieve_context")
+builder.add_edge(
+    ["retrieve_memories", "retrieve_chat_history", "retrieve_context"],
+    "generate_answer",
+)
+builder.add_conditional_edges("generate_answer", title_check)
+builder.add_edge("generate_title", "save_messages")
 builder.add_edge("save_messages", "memory_decision")
-builder.add_edge("memory_decision", END)
+builder.add_edge("memory_decision", "update_memory")
+builder.add_edge("update_memory", END)

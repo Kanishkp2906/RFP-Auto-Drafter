@@ -2,7 +2,7 @@ import httpx
 from fastapi import APIRouter, Header, HTTPException
 from config import supabase_url, supabase_anon_key
 
-router = APIRouter(prefix="/api/test", tags=["RLS Test"])
+router = APIRouter(prefix="/v1/test", tags=["RLS Test"])
 
 
 @router.get("/auth")

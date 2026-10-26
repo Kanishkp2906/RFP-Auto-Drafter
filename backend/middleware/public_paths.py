@@ -3,8 +3,8 @@ PUBLIC_PATHS = {
     "/openapi.json",
     "/redoc",
     "/health",
-    "/api/users/signup",
-    "/api/users/signin",
-    "/api/healthcheck/health",
-    "/api/healthcheck/ready",
+    "/v1/users/signup",
+    "/v1/users/signin",
+    "/v1/healthcheck/health",
+    "/v1/healthcheck/ready",
 }

@@ -15,12 +15,13 @@ backend/*.pdf
 backend/.gitignore
 backend/*.txt
 backend/*.log
+backend/models_list.txt
 
 # Dependencies
 frontend/node_modules/
 
 # Production build
-rfp_frontend/dist/
+frontend/dist/
 
 # Environment variables and secrets
 frontend/.env
@@ -36,3 +37,10 @@ frontend/pnpm-debug.log*
 frontend/.vite/
 frontend/.cache/
 
+frontend/.taste-skill/
+frontend/guidelines/
+
+
+.agents
+.claude
+.taske-skill

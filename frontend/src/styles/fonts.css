@@ -1,10 +1,9 @@
-/* Inter — body, UI, navigation, inputs */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
-
-/* Lora — heading fallback for New Libron (premium/custom font not on Google Fonts) */
-@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+/* Instrument Sans — UI, body, chat; Fraunces — the greeting, masthead and dialog
+   titles only. High-contrast editorial serif, reads elegant and professional next
+   to Instrument Sans (swap "The Seasons" in first if you buy/get its web files). */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400..600&display=swap");
 
 :root {
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-serif: "New Libron", "Lora", Georgia, serif;
+  --font-sans: "Instrument Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Fraunces", Georgia, serif;
 }

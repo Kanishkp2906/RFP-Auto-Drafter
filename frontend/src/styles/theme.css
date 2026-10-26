@@ -1,85 +1,133 @@
 @custom-variant dark (&:is(.dark *));
 
-/* RFP Auto Drafter — dark-only theme inspired by herdr.dev's near-black terminal aesthetic */
+/* RFP Auto Drafter — Editorial greeting (dealt: editorial-greeting, seed 2002096819).
+   Light: white sheet on a warm chrome frame, ink text, one deep-blue accent spent
+   sparingly, tonal panels and 1px edges instead of shadows, controls as pills.
+   Dark: the same warm-ink system inverted onto near-black, accent lifted for contrast. */
 :root {
   --font-size: 16px;
-  --background: #0c0c0f;
-  --foreground: #e1e1e8;
-  --card: #131316;
-  --card-foreground: #e1e1e8;
-  --popover: #181820;
-  --popover-foreground: #e1e1e8;
-  --primary: #e1e1e8;
-  --primary-foreground: #0c0c0f;
-  --secondary: #1c1c22;
-  --secondary-foreground: #e1e1e8;
-  --muted: #1c1c22;
-  --muted-foreground: #6b6b80;
-  --accent: #5b6ef5;
+  --background: #ffffff;
+  --foreground: #1f201d;
+  --card: #ffffff;
+  --card-foreground: #1f201d;
+  --popover: #ffffff;
+  --popover-foreground: #1f201d;
+  --primary: #1f201d;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f3f0;
+  --secondary-foreground: #1f201d;
+  --muted: #f4f3f0;
+  --muted-foreground: #636361;
+  --accent: #1d50a8;
   --accent-foreground: #ffffff;
-  --destructive: #c0392b;
+  --destructive: #b42318;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.07);
-  --input: rgba(255, 255, 255, 0.05);
-  --input-background: #1c1c22;
-  --switch-background: #2a2a35;
+  --border: #eaeaea;
+  --input: #e4e3df;
+  --input-background: #f9f8f5;
+  --switch-background: #dedcd7;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: rgba(91, 110, 245, 0.45);
-  --chart-1: #5b6ef5;
-  --chart-2: #4fc3a1;
-  --chart-3: #f5a623;
-  --chart-4: #e05c8a;
-  --chart-5: #82c3f5;
-  --radius: 0.5rem;
-  --sidebar: #101013;
-  --sidebar-foreground: #e1e1e8;
-  --sidebar-primary: #5b6ef5;
+  --ring: rgba(29, 80, 168, 0.5);
+  --chart-1: #1f201d;
+  --chart-2: #1d50a8;
+  --chart-3: #8c8c88;
+  --chart-4: #636361;
+  --chart-5: #b42318;
+  --radius: 1.25rem;
+  --sidebar: #f7f6f2;
+  --sidebar-foreground: #1f201d;
+  --sidebar-primary: #1d50a8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1c1c22;
-  --sidebar-accent-foreground: #e1e1e8;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: rgba(91, 110, 245, 0.45);
+  --sidebar-accent: #eceae5;
+  --sidebar-accent-foreground: #1f201d;
+  --sidebar-border: transparent;
+  --sidebar-ring: rgba(29, 80, 168, 0.5);
+  --placeholder: #6f6e68;
+  /* pale status pills (light) */
+  --pill-neutral-bg: #f3f3f3;
+  --pill-neutral-ink: #3d3d3a;
+  --pill-warning-bg: #fffbeb;
+  --pill-warning-ink: #92400e;
+  --pill-warning-border: #f2e4c4;
+  --pill-negative-bg: #fdecea;
+  --pill-negative-ink: #7a1d14;
+  --pill-negative-border: rgba(180, 35, 24, 0.25);
+  --pill-positive-bg: #dcfae5;
+  --pill-positive-ink: #04250e;
+  --pill-positive-border: rgba(16, 122, 65, 0.25);
+  /* code chip inline in answers */
+  --code-ink: #4338ca;
+  /* avatar fill */
+  --avatar-bg: #eceae5;
+  --avatar-ring: #d9d9d6;
+  --scrim: rgba(15, 14, 12, 0.4);
 }
 
 .dark {
-  --background: #0c0c0f;
-  --foreground: #e1e1e8;
-  --card: #131316;
-  --card-foreground: #e1e1e8;
-  --popover: #181820;
-  --popover-foreground: #e1e1e8;
-  --primary: #e1e1e8;
-  --primary-foreground: #0c0c0f;
-  --secondary: #1c1c22;
-  --secondary-foreground: #e1e1e8;
-  --muted: #1c1c22;
-  --muted-foreground: #6b6b80;
-  --accent: #5b6ef5;
-  --accent-foreground: #ffffff;
-  --destructive: #c0392b;
-  --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.07);
-  --input: rgba(255, 255, 255, 0.05);
-  --input-background: #1c1c22;
-  --switch-background: #2a2a35;
+  --font-size: 16px;
+  --background: #191817;
+  --foreground: #f0efec;
+  --card: #201f1d;
+  --card-foreground: #f0efec;
+  --popover: #232220;
+  --popover-foreground: #f0efec;
+  --primary: #f0efec;
+  --primary-foreground: #191817;
+  --secondary: #262523;
+  --secondary-foreground: #f0efec;
+  --muted: #262523;
+  --muted-foreground: #a4a19a;
+  --accent: #8fb0f5;
+  --accent-foreground: #14213f;
+  --destructive: #f2555a;
+  --destructive-foreground: #2a0b09;
+  --border: #343230;
+  --input: #3a3835;
+  --input-background: #262523;
+  --switch-background: #3f3d3a;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: rgba(91, 110, 245, 0.45);
-  --chart-1: #5b6ef5;
-  --chart-2: #4fc3a1;
-  --chart-3: #f5a623;
-  --chart-4: #e05c8a;
-  --chart-5: #82c3f5;
-  --radius: 0.5rem;
-  --sidebar: #101013;
-  --sidebar-foreground: #e1e1e8;
-  --sidebar-primary: #5b6ef5;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1c1c22;
-  --sidebar-accent-foreground: #e1e1e8;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: rgba(91, 110, 245, 0.45);
+  --ring: rgba(143, 176, 245, 0.5);
+  --chart-1: #f0efec;
+  --chart-2: #8fb0f5;
+  --chart-3: #8c8c88;
+  --chart-4: #a4a19a;
+  --chart-5: #f2555a;
+  --radius: 1.25rem;
+  --sidebar: #1c1b19;
+  --sidebar-foreground: #f0efec;
+  --sidebar-primary: #8fb0f5;
+  --sidebar-primary-foreground: #14213f;
+  --sidebar-accent: #262523;
+  --sidebar-accent-foreground: #f0efec;
+  --sidebar-border: transparent;
+  --sidebar-ring: rgba(143, 176, 245, 0.5);
+  --placeholder: #8a857c;
+  /* status pills on dark */
+  --pill-neutral-bg: #262523;
+  --pill-neutral-ink: #c9c6bf;
+  --pill-warning-bg: #3a2d14;
+  --pill-warning-ink: #eec27f;
+  --pill-warning-border: rgba(238, 194, 127, 0.25);
+  --pill-negative-bg: #3b1a17;
+  --pill-negative-ink: #f2a49c;
+  --pill-negative-border: rgba(242, 165, 156, 0.25);
+  --pill-positive-bg: #12331e;
+  --pill-positive-ink: #9fd9b4;
+  --pill-positive-border: rgba(159, 217, 180, 0.25);
+  /* code chip inline in answers */
+  --code-ink: #b9c6ff;
+  /* avatar fill */
+  --avatar-bg: #33322f;
+  --avatar-ring: #4a4843;
+  --scrim: rgba(8, 8, 7, 0.6);
+}
+
+/* muted tier at 4.5:1 per theme */
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
 }
 
 @theme inline {

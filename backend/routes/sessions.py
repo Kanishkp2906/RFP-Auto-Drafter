@@ -6,8 +6,11 @@ from schemas import Sessions, ChatMessages
 from supabase import Client
 from typing import List
 from uuid import UUID
+import logging
 
-router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/v1/sessions", tags=["Sessions"])
 
 
 @router.post("/new-chat", response_model=Sessions, status_code=status.HTTP_201_CREATED)
@@ -17,7 +20,8 @@ async def new_session(
 
     session = {
         "user_id": current_user.id,
-        "title": "New chat",
+        "title": None,
+        "pinned": False,
         "created_at": get_datetime(),
     }
 
@@ -28,22 +32,13 @@ async def new_session(
             db.table("sessions").select("*").eq("user_id", current_user.id).execute()
         )
 
-        if not user_sessions.data:
-            raise HTTPException(
-                status_code=500, detail="Failed to create a new session."
-            )
-
         await delete_cache(f"sessions:{current_user.id}")
-        await set_cache(f"sessions:{current_user.id}", user_sessions.data[0], 600)
+        await set_cache(f"sessions:{current_user.id}", user_sessions.data, 600)
 
-        if db_response.data:
-            return db_response.data[0]
-
-    except HTTPException:
-        raise
+        return db_response.data[0]
 
     except Exception as error:
-        print("[+] Error in creating a new session.")
+        logger.exception(f"[-] Error in creating a new session: {str(error)}")
         raise HTTPException(status_code=503, detail=str(error))
 
 
@@ -61,18 +56,13 @@ async def user_sessions(
             db.table("sessions").select("*").eq("user_id", current_user.id).execute()
         )
 
-        if not db_sessions.data:
-            raise HTTPException(status_code=500, detail="Failed to get user sessions.")
-
         await set_cache(f"sessions:{current_user.id}", db_sessions.data, 600)
 
         return db_sessions.data
 
-    except HTTPException:
-        raise
-
     except Exception as error:
-        print(f"Error in retrieving user sessions: {str(error)}")
+        logger.exception(f"[-] Error in user sessions route: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
 
 
 @router.get("/{session_id}/messages", response_model=ChatMessages)
@@ -130,5 +120,137 @@ async def get_session_messages(
         raise
 
     except Exception as error:
-        print(f"[+] Error in session messages route: {str(error)}")
-        raise HTTPException(status_code=502, detail=str(error))
+        logger.exception(f"[-] Error in session messages route: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
+
+
+@router.delete("/{session_id}/delete", response_model=Sessions)
+async def delete_session(
+    session_id: UUID,
+    current_user=Depends(get_current_user),
+    db: Client = Depends(get_admin_db),
+):
+
+    try:
+        db_session = (
+            db.table("sessions").select("*").eq("user_id", current_user.id).execute()
+        )
+
+        if not db_session.data:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        deleted_session = (
+            db.table("sessions")
+            .delete()
+            .eq("id", session_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+        if not deleted_session.data:
+            raise HTTPException(status_code=404, detail="Failed to find the session.")
+
+        user_sessions = (
+            db.table("sessions").select("*").eq("user_id", current_user.id).execute()
+        )
+
+        await delete_cache(f"sessions:{current_user.id}")
+        if user_sessions.data:
+            await set_cache(f"sessions:{current_user.id}", user_sessions.data, 600)
+
+        return deleted_session.data[0]
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        logger.exception(f"[-] Error in delete session route: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
+
+
+@router.patch("/{session_id}/rename", response_model=Sessions)
+async def rename_session(
+    session_id: UUID,
+    new_title: str,
+    current_user=Depends(get_current_user),
+    db: Client = Depends(get_admin_db),
+):
+    try:
+        db_session = (
+            db.table("sessions")
+            .select("id")
+            .eq("id", session_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+        if not db_session.data:
+            raise HTTPException(status_code=404, detail="Session not found.")
+
+        updated_session = (
+            db.table("sessions")
+            .update({"title": new_title})
+            .eq("id", session_id)
+            .execute()
+        )
+
+        user_sessions = (
+            db.table("sessions").select("*").eq("user_id", current_user.id).execute()
+        )
+
+        await delete_cache(f"sessions:{current_user.id}")
+        if user_sessions.data:
+            await set_cache(f"sessions:{current_user.id}", user_sessions.data, 600)
+
+        return updated_session.data[0]
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        logger.exception(f"[-] Error in renaming the session: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
+
+
+@router.patch("/{session_id}/pin", response_model=Sessions)
+async def pin_session(
+    session_id: UUID,
+    pinned: bool = Query(default=True),
+    current_user=Depends(get_current_user),
+    db: Client = Depends(get_admin_db),
+):
+    try:
+        db_session = (
+            db.table("sessions")
+            .select("id")
+            .eq("id", session_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+        if not db_session.data:
+            raise HTTPException(status_code=404, detail="Session not found.")
+
+        updated_session = (
+            db.table("sessions")
+            .update({"pinned": pinned})
+            .eq("id", session_id)
+            .execute()
+        )
+
+        user_sessions = (
+            db.table("sessions").select("*").eq("user_id", current_user.id).execute()
+        )
+
+        await delete_cache(f"sessions:{current_user.id}")
+        if user_sessions.data:
+            await set_cache(f"sessions:{current_user.id}", user_sessions.data, 600)
+
+        return updated_session.data[0]
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        logger.exception(f"[-] Error in pinning the session: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))

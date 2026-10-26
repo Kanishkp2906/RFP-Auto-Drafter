@@ -1,23 +1,23 @@
 import shutil
 import uuid
+import logging
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, status
 from auth import get_current_user, get_user_db, get_user_storage
 from schemas import DocumentResponse, UploadStatus, UploadResponse, FailedFiles
 from typing import List, Tuple
 from supabase import Client
-from dependencies import get_datetime
+from dependencies import get_datetime, sync_redis
 from vector_script import document_vectorizer
 from rq import Retry, Queue
-from redis import Redis
 from services.cache import get_cache, set_cache, delete_cache
 
+logger = logging.getLogger(__name__)
 
-sync_redis_client = Redis(host="localhost", port="6379", decode_responses=True)
-queue = Queue(connection=sync_redis_client)
+queue = Queue(connection=sync_redis)
 
 
-router = APIRouter(prefix="/api/documents", tags=["Documents"])
+router = APIRouter(prefix="/v1/documents", tags=["Documents"])
 
 Base_dir = Path(__file__).resolve().parent.parent
 Upload_dir = Base_dir / "uploaded_docs"
@@ -25,7 +25,7 @@ Upload_dir.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_FILE_TYPES = {"application/pdf"}
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
 def vectorize_documents(
@@ -34,7 +34,7 @@ def vectorize_documents(
     user_id: uuid.UUID,
     document_id: uuid.UUID,
 ) -> None:
-    # try:
+
     queue.enqueue(
         document_vectorizer,
         str(destination_path),
@@ -168,12 +168,10 @@ async def upload_files(
                 }
             )
 
-    await delete_cache(f"documents:{user_id}")
-
     db_documents = db.table("documents").select("*").eq("user_id", user_id).execute()
 
-    if db_documents.data:
-        await set_cache(f"documents:{user_id}", db_documents.data, 600)
+    await delete_cache(f"documents:{user_id}")
+    await set_cache(f"documents:{user_id}", db_documents.data, 600)
 
     return db_responses, failed_files
 
@@ -271,14 +269,12 @@ async def delete_file(
             .execute()
         )
 
-        await delete_cache(f"documents:{current_user.id}")
-
         db_documents = (
             db.table("documents").select("*").eq("user_id", current_user.id).execute()
         )
 
-        if db_documents.data:
-            await set_cache(f"documents:{current_user.id}", db_documents.data, 600)
+        await delete_cache(f"documents:{current_user.id}")
+        await set_cache(f"documents:{current_user.id}", db_documents.data, 600)
 
         return db_response.data[0]
 
@@ -286,8 +282,8 @@ async def delete_file(
         raise
 
     except Exception as error:
-        print(f"Error occured in delete route: {str(error)}")
-        raise HTTPException(status_code=500, detail=str(error))
+        logger.exception(f"[-] Error occured in delete route: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
 
 
 @router.get("/user_files", response_model=List[DocumentResponse])
@@ -304,11 +300,10 @@ async def user_files(
             db.table("documents").select("*").eq("user_id", current_user.id).execute()
         )
 
-        if db_response.data:
-            await set_cache(f"documents:{current_user.id}", db_response.data, 600)
+        await set_cache(f"documents:{current_user.id}", db_response.data, 600)
 
         return db_response.data
 
     except Exception as error:
-        print(f"Error in getting the user files: {str(error)}")
-        raise HTTPException(status_code=500, detail=str(error))
+        logger.exception(f"[-] Error in getting the user files: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
