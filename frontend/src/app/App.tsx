@@ -8,6 +8,7 @@ import {
 import { Toaster, toast } from "sonner";
 import { AuthProvider, useAuth } from "../auth/AuthProvider";
 import { api, ApiError } from "../lib/api";
+import { supabase } from "../lib/supabase";
 import type { ChatMessage, DocumentResponse, Session } from "../lib/types";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -418,7 +419,7 @@ function GoogleIcon({ size = 14 }: { size?: number }) {
 
 // ─── Auth Modal ───────────────────────────────────────────────────────────────
 
-type AuthView = "login" | "signup";
+type AuthView = "login" | "signup" | "reset-password";
 
 interface AuthModalProps {
   view: AuthView;
@@ -433,12 +434,45 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [signupDone, setSignupDone] = useState(false);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!newPassword || newPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) throw error;
+      toast("Password updated — please sign in with your new password.");
+      await supabase.auth.signOut();
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPw(false);
+      onClose();
+      onViewChange("login");
+    } catch (err) {
+      setError(errorMessage(err, "Could not update password. Please try again."));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -524,15 +558,17 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
             </h2>
           ) : (
             <h2 className="text-xl font-semibold text-foreground" style={{ fontFamily: "var(--font-serif)" }}>
-              {view === "login" ? "Welcome back" : "Create your account"}
+              {view === "reset-password" ? "Update password" : view === "login" ? "Welcome back" : "Create your account"}
             </h2>
           )}
           <p className="text-sm text-muted-foreground mt-1">
-            {signupDone
-              ? "We sent a confirmation link to " + email
-              : view === "login"
-              ? "Sign in to continue your work"
-              : "Start analyzing RFPs in seconds"}
+              {signupDone
+                ? "We sent a confirmation link to " + email
+                : view === "reset-password"
+                ? "Enter your new password below"
+                : view === "login"
+                ? "Sign in to continue your work"
+                : "Start analyzing RFPs in seconds"}
           </p>
         </div>
 
@@ -549,7 +585,10 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form
+            onSubmit={view === "reset-password" ? handleResetPassword : handleSubmit}
+            className="space-y-3"
+          >
             {resetSent && (
               <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 text-sm text-accent/90">
                 Reset link sent — check your email.
@@ -579,47 +618,51 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-email">
-                Email
-              </label>
-              <input
-                id="auth-email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full rounded-lg bg-input-background border border-border px-3 py-2 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-pw">
-                Password
-              </label>
-              <div className="relative">
+            {view !== "reset-password" && (
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-email">
+                  Email
+                </label>
                 <input
-                  id="auth-pw"
-                  type={showPw ? "text" : "password"}
+                  id="auth-email"
+                  type="email"
                   required
-                  autoComplete={view === "login" ? "current-password" : "new-password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg bg-input-background border border-border px-3 py-2 pr-9 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  className="w-full rounded-lg bg-input-background border border-border px-3 py-2 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPw((p) => !p)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
-                  aria-label={showPw ? "Hide password" : "Show password"}
-                >
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
               </div>
-            </div>
+            )}
+
+            {view !== "reset-password" && (
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-pw">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="auth-pw"
+                    type={showPw ? "text" : "password"}
+                    required
+                    autoComplete={view === "login" ? "current-password" : "new-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg bg-input-background border border-border px-3 py-2 pr-9 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                  >
+                    {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {view === "signup" && (
               <div>
@@ -633,6 +676,51 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
                   autoComplete="new-password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg bg-input-background border border-border px-3 py-2 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
+                />
+              </div>
+            )}
+
+            {view === "reset-password" && (
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-new-pw">
+                  New password
+                </label>
+                <div className="relative">
+                  <input
+                    id="auth-new-pw"
+                    type={showPw ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg bg-input-background border border-border px-3 py-2 pr-9 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                  >
+                    {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            )}
+            {view === "reset-password" && (
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5" htmlFor="auth-confirm-pw">
+                  Confirm new password
+                </label>
+                <input
+                  id="auth-confirm-pw"
+                  type={showPw ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-lg bg-input-background border border-border px-3 py-2 text-sm text-foreground  focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent/50 transition-[border-color,box-shadow]"
                 />
@@ -657,38 +745,33 @@ function AuthModal({ view, onViewChange, onClose, onSuccess }: AuthModalProps) {
               className="w-full mt-1 rounded-lg bg-accent text-accent-foreground py-2.5 text-sm font-medium hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 transition-[border-color,background-color,color] flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
-              {view === "login" ? "Sign in" : "Create account"}
+              {view === "reset-password"
+                ? "Update password"
+                : view === "login"
+                ? "Sign in"
+                : "Create account"}
             </button>
 
-            <div className="relative pt-1">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-2 text-[11px] text-muted-foreground bg-card rounded">
-                  or continue with
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={googleLoading || loading}
-              className="w-full rounded-lg border border-border bg-input-background py-2.5 text-sm font-medium text-foreground hover:bg-foreground/[0.04] focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 transition-[border-color,background-color,color] flex items-center justify-center gap-2.5"
-              aria-label="Continue with Google"
-            >
-              {googleLoading ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
-              Continue with Google
-            </button>
+            {view !== "reset-password" && (
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={googleLoading || loading}
+                className="w-full rounded-lg border border-border bg-input-background py-2.5 text-sm font-medium text-foreground hover:bg-foreground/[0.04] focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 transition-[border-color,background-color,color] flex items-center justify-center gap-2.5"
+                aria-label="Continue with Google"
+              >
+                {googleLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <GoogleIcon />
+                )}
+                Continue with Google
+              </button>
+            )}
           </form>
         )}
 
-        {!signupDone && (
+        {!signupDone && view !== "reset-password" && (
           <p className="mt-5 text-center text-xs text-muted-foreground">
             {view === "login" ? (
               <>
@@ -1107,7 +1190,6 @@ function EmptyState({ userName }: { userName?: string }) {
       >
         Hello{userName ? `, ${userName}` : ""}
       </h1>
-      <p className="text-base text-muted-foreground">Let&apos;s get started</p>
       <p className="text-[13px] text-muted-foreground mb-10">Upload an RFP document, then ask — answers cite the sections they draw on.</p>
       <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm">
         {[
@@ -1416,6 +1498,9 @@ function AppShell() {
     const sources = [window.location.search, window.location.hash.slice(1)];
     for (const qs of sources) {
       const params = new URLSearchParams(qs);
+      console.log('[AUTH DEBUG] raw search:', window.location.search);
+      console.log('[AUTH DEBUG] raw hash:', window.location.hash);
+      console.log('[AUTH DEBUG] parsed params:', Object.fromEntries(params));
       const oauthError = params.get("error");
       if (!oauthError) continue;
       const description = params.get("error_description") ?? "";
@@ -1433,6 +1518,39 @@ function AppShell() {
       toast(detail, { duration: 8000 });
       window.history.replaceState({}, "", window.location.pathname);
       break;
+    }
+  }, []);
+
+  // ── Password-reset recovery arrival ──────────────────────────────────────
+  // Supabase redirects back from the forgot-password email link with
+  // ?access_token=...&refresh_token=...&type=recovery. Re-establish the session
+  // so the authenticated update-user call works, then show the reset form.
+  useEffect(() => {
+    let handled = false;
+    const sources = [window.location.search, window.location.hash.slice(1)];
+    console.log('[AUTH RECOVERY DEBUG] raw search:', window.location.search);
+    console.log('[AUTH RECOVERY DEBUG] raw hash:', window.location.hash);
+    for (const qs of sources) {
+      const params = new URLSearchParams(qs);
+      console.log('[AUTH RECOVERY DEBUG] parsed params:', Object.fromEntries(params));
+      const type = params.get("type");
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if ((type === "recovery" || (accessToken && refreshToken)) && !handled) {
+        handled = true;
+        (async () => {
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+          }
+          window.history.replaceState({}, "", window.location.pathname);
+          setShowAuth(true);
+          setAuthView("reset-password");
+        })();
+        break;
+      }
     }
   }, []);
 

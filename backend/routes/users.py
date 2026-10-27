@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from dependencies import get_supabase, get_admin_db
 from supabase import Client
 from auth import get_current_user, get_user_db
-from schemas import UserSignUp, UserSignIn, UserResponse
+from schemas import UserSignUp, UserSignIn, UserResponse, PasswordUpdate
 from services.cache import set_cache, get_cache, delete_cache
 
 logger = logging.getLogger(__name__)
@@ -158,4 +158,21 @@ async def update_email(
 
     except Exception as error:
         logger.exception(f"[-] Error in updating email: {str(error)}")
+        raise HTTPException(status_code=503, detail=str(error))
+
+
+@router.patch("/update-password")
+async def update_password(
+    new_password: PasswordUpdate,
+    current_user=Depends(get_current_user),
+    db: Client = Depends(get_admin_db),
+):
+    try:
+        db.auth.admin.update_user_by_id(
+            current_user.id, {"password": new_password.password}
+        )
+        return {"status": 200, "detail": "Password updated successfully."}
+
+    except Exception as error:
+        logger.exception("[-] Error in updating the user password.")
         raise HTTPException(status_code=503, detail=str(error))

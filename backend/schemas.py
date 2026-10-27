@@ -28,9 +28,8 @@ class UserSignIn(BaseModel):
     password: str
 
 
-class UserUpdate(BaseModel):
-    username: str
-    email: EmailStr
+class PasswordUpdate(BaseModel):
+    password: str
 
 
 class UserResponse(BaseModel):

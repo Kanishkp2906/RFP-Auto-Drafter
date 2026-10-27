@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routes import files, users, rag, healthcheck, sessions
 from contextlib import asynccontextmanager
-from config import supabase_db_uri
+from config import supabase_db_uri, frontend_url
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from agent.graph import builder
 from middleware.log_middleware import logger
@@ -44,7 +44,7 @@ app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

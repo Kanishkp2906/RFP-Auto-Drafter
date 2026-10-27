@@ -6,15 +6,14 @@ import pytz
 import redis
 import redis.asyncio as async_redis
 from fastapi import HTTPException
+from config import redis_url
 
 logger = logging.getLogger(__name__)
 
 
 try:
-    sync_redis = redis.Redis(host="localhost", port="6379", decode_responses=True)
-    async_redis = async_redis.Redis(
-        host="localhost", port="6379", decode_responses=True
-    )
+    sync_redis = redis.Redis.from_url(redis_url, decode_responses=True)
+    async_redis = async_redis.Redis.from_url(redis_url, decode_responses=True)
 
 except Exception as error:
     logger.info("[-] Error in creating redis clients.")
