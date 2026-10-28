@@ -1,7 +1,7 @@
 import logging
 from pydantic import EmailStr
 from fastapi import APIRouter, HTTPException, Depends
-from dependencies import get_supabase, get_admin_db
+from dependencies import get_supabase, get_admin_db, async_redis
 from supabase import Client
 from auth import get_current_user, get_user_db
 from schemas import UserSignUp, UserSignIn, UserResponse, PasswordUpdate
@@ -176,3 +176,18 @@ async def update_password(
     except Exception as error:
         logger.exception("[-] Error in updating the user password.")
         raise HTTPException(status_code=503, detail=str(error))
+
+
+@router.post("/clear-ratelimit")
+async def clear_ratelimit(current_user=Depends(get_current_user)):
+    try:
+        keys = [
+            f"ratelimiting:{current_user.id}",
+            f"ratelimiting:sliding:{current_user.id}:/v1/documents/uploads",
+            f"ratelimiting:sliding:{current_user.id}:/v1/rag/chat",
+        ]
+        deleted = await async_redis.delete(*keys)
+        return {"status": "ok", "deleted": deleted}
+    except Exception as error:
+        logger.exception("[-] Error clearing rate limit.")
+        raise HTTPException(status_code=500, detail=str(error))

@@ -32,7 +32,7 @@ class RedisRateLimiter(BaseHTTPMiddleware):
 
         if config and request.method == "POST":
             limit, window = config
-            key = f"ratelimiting:sliding:{user.id}: {request.url.path}"
+            key = f"ratelimiting:sliding:{user.id}:{request.url.path}"
 
             allowed, retry_after = await self.sliding_script(
                 keys=[key],
@@ -50,7 +50,7 @@ class RedisRateLimiter(BaseHTTPMiddleware):
                 )
 
         else:
-            redis_key = f"ratelimiting: {user.id}"
+            redis_key = f"ratelimiting:{user.id}"
             count = await async_redis.incr(redis_key)
 
             if count == 1:

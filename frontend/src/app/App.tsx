@@ -1933,8 +1933,9 @@ function AppShell() {
     actualSendMessage(input);
   };
 
-  const handleAuthSuccess = useCallback(() => {
+  const handleAuthSuccess = useCallback(async () => {
     setShowAuth(false);
+    await api.clearRateLimit();
   }, []);
 
   // ── Sign out ────────────────────────────────────────────────────────────────
@@ -1944,6 +1945,7 @@ function AppShell() {
     try {
       loadAbortRef.current?.abort();
       loadAbortRef.current = null;
+      await api.clearRateLimit();
       await signOut();
       setShowAccountMenu(false);
       toast("Signed out.");

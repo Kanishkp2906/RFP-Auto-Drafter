@@ -228,8 +228,10 @@ async def memory_decision_node(state: AgentState) -> AgentState:
 
         structured_model = model.with_structured_output(MemoryDecision)
 
+        user_query = str(state["user_query"])
+
         answer = await structured_model.ainvoke(
-            [("system", MEMORY_DECISION_PROMPT), ("human", state["user_query"])]
+            [("system", MEMORY_DECISION_PROMPT), ("human", user_query)]
         )
 
         print("Mem Decision:", answer.mem_decision)
@@ -254,6 +256,9 @@ async def update_memory_node(state: AgentState) -> AgentState:
         messages = [
             {"role": "user", "content": state["user_query"]},
         ]
+
+        user_query = str(state["user_query"])
+        messages = [{"role": "user", "content": user_query}]
 
         await mem_client.add(
             messages,

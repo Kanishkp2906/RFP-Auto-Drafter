@@ -102,6 +102,11 @@ export const api = {
   deleteProfile: () =>
     request<UserProfile>("/v1/users/profile-delete", { method: "DELETE" }),
 
+  clearRateLimit: () =>
+    request<{ status: string; deleted: number }>("/v1/users/clear-ratelimit", {
+      method: "POST",
+    }),
+
   getDocumentDownloadUrl: async (storagePath: string): Promise<string> => {
     const { data, error } = await supabase.storage
       .from(DOC_STORAGE_BUCKET)
