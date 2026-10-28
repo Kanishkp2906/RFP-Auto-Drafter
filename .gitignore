@@ -13,7 +13,6 @@ backend/uploaded_docs
 backend/rfp_function.sql
 backend/*.pdf
 backend/.gitignore
-backend/*.txt
 backend/*.log
 backend/models_list.txt
 
