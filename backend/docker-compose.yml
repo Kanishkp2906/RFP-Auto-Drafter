@@ -7,6 +7,8 @@ services:
       - "8008:8008"
     env_file:
       - .env
+    volumes:
+      - uploaded_docs:/app/uploaded_docs
     restart: unless-stopped
 
   worker:
@@ -16,4 +18,9 @@ services:
     env_file:
       - .env
     command: rq worker --with-scheduler
+    volumes:
+      - uploaded_docs:/app/uploaded_docs
     restart: unless-stopped
+
+volumes:
+  uploaded_docs
