@@ -105,7 +105,7 @@ def document_vectorizer(
         )
 
     except Exception as error:
-        logger.execption(f"[FAILURE]: Document vecotrization failed: {str(error)}")
+        logger.exception(f"[FAILURE]: Document vecotrization failed: {str(error)}")
         db_response = (
             db.table("documents")
             .update({"upload_status": UploadStatus.failed.value})
@@ -153,5 +153,5 @@ def get_pdf_sections(document_path: str) -> dict:
         return sections
 
     except Exception as e:
-        logger.execption(f"[+] Error occured in finding sections of pdf: {str(e)}")
+        logger.exception(f"[+] Error occured in finding sections of pdf: {str(e)}")
         raise PDFProcessingError("Error occured while converting the pdf to markdown.")
