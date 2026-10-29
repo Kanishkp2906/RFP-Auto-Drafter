@@ -1536,7 +1536,10 @@ function AppShell() {
       const type = params.get("type");
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
-      if ((type === "recovery" || (accessToken && refreshToken)) && !handled) {
+      // Only a genuine forgot-password link carries type=recovery. A plain
+      // Google OAuth callback also delivers access_token/refresh_token, so it
+      // must not open the reset-password form.
+      if (type === "recovery" && !handled) {
         handled = true;
         (async () => {
           if (accessToken && refreshToken) {
