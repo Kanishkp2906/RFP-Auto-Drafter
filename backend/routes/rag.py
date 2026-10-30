@@ -29,6 +29,7 @@ async def stream_agent(request: Request, agent_state: dict):
                     yield f"data: {json.dumps(answer.model_dump_json())}\n\n"
 
     except Exception as error:
+        logger.exception(f"[-] Error in stream agent: {str(error)}")
         detail = getattr(error, "detail", str(error))
         yield f"data: {json.dumps(json.dumps({'error': str(detail)}))}\n\n"
 
