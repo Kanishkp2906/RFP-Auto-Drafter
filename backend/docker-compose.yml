@@ -23,4 +23,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  uploaded_docs
+  uploaded_docs:

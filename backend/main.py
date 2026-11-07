@@ -3,6 +3,7 @@ from routes import files, users, rag, healthcheck, sessions
 from contextlib import asynccontextmanager
 from config import supabase_db_uri, frontend_url
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg_pool import AsyncConnectionPool
 from agent.graph import builder
 from middleware.log_middleware import logger
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,14 +21,28 @@ async def lifespan(app: FastAPI):
     logger.info("__RFP Server is starting.")
     await async_admin_db()
 
-    async with AsyncPostgresSaver.from_conn_string(supabase_db_uri) as checkpointer:
+    pool = AsyncConnectionPool(
+        conninfo=supabase_db_uri,
+        min_size=1,
+        max_size=5,
+        kwargs={"autocommit": True},
+        check=AsyncConnectionPool.check_connection,
+        open=False,
+    )
+
+    await pool.open()
+
+    try:
+        checkpointer = AsyncPostgresSaver(pool)
         await checkpointer.setup()
 
         app.state.graph = builder.compile(checkpointer=checkpointer)
 
         yield
 
-    logger.info("__RFP Server is shutting down.")
+    finally:
+        await pool.close()
+        logger.info("__RFP Server is shutting down.")
 
 
 app = FastAPI(title="RFP Auto Drafter", lifespan=lifespan)
